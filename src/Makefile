@@ -1,5 +1,5 @@
 LIBS=-lraylib -lm 
-INCLUDE=-I../externals/
+INCLUDE=-I../include
 CFLAGS=-Wall -Wextra -fsanitize=address -fsanitize=pointer-compare -fPIE
 BUILD=../build
 OBJECTS=$(BUILD)/drawop.o\
@@ -22,7 +22,7 @@ $(BUILD)/drawop.o: drawop.c
 $(BUILD)/drawopapi.o: drawopapi.c 	
 	$(CC) $(CFLAGS) $(INCLUDE) -c drawopapi.c -o $(BUILD)/drawopapi.o
 $(BUILD)/internal.o: internal.c 	
-	$(CC) $(CFLAGS) $(INCLUDE) -c internal.c  -o $(BUILD)/internal.o
+	$(CC) $(CFLAGS) $(INCLUDE) -c internal.c  -o $(BUILD)/internal.o -Wno-unused-parameter
 
 $(BUILD)/drawop: $(OBJECTS) 		
 	$(CC) $(CFLAGS) $(INCLUDE) $(OBJECTS) $(LIBS) -o $(BUILD)/drawop
