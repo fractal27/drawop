@@ -3,7 +3,25 @@
 #include <stddef.h>
 #include <raylib.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <time.h>
 
+//#define DRAWOPAPI_PROFILE
+#define DRAWOPAPI_NO_LOG
+
+#ifdef DRAWOPAPI_NO_LOG
+#define TraceLog(...) do {} while(0);
+#endif
+
+
+#ifdef DRAWOPAPI_PROFILE
+#define get_ns_time(start) clock_gettime(CLOCK_REALTIME,start)
+#define delta_time(after,before) (int64_t)(after.tv_sec - before.tv_sec) * (int64_t)1e9\
+                                        + (int64_t)(after.tv_nsec - before.tv_nsec)
+#else
+#define get_ns_time(start)
+#define delta_time(after,before)
+#endif
 
 #define screenWidth     1920
 #define screenHeight    1080
@@ -28,7 +46,6 @@ extern const Color HELP_COLOR;//(Color){0xfd,0xfd,0xfd,0xff};
 /*** STRUCTS ***/
 
 typedef struct {
-    const char* assets_dir;
     Color background;
     bool transparent;
 
@@ -54,7 +71,7 @@ typedef struct {
     } mode;
 
     Vector2 mouse_position;
-    volatile float alpha;
+    float alpha;
     double radius;
     Color color;
 
@@ -77,9 +94,12 @@ typedef struct {
     //signals for multiple-key input
     bool left_click_pressed;
     bool control_pressed;
+    bool should_clear;
 
     //help window
     bool help_window;
+    int64_t background_cleared;
+
 } drawop_state;
 
 
@@ -113,6 +133,7 @@ typedef enum {                             /*TLDR;*/
     DRAWOP_UPDATE_ALPHA        = 0x000001,
     DRAWOP_TOGGLE_COLOR_PICKER = 0x000002,
     DRAWOP_TOGGLE_HELP         = 0x000004,
+    DRAWOP_TOGGLE_TRANSPARENT  = 0x000008,
     DRAWOP_SWITCHTO_LASER      = 0x000010, /*4. Cannot couple together*/
     DRAWOP_SWITCHTO_HIGHLIGHT  = 0x000020, /*5. ***********************/
     DRAWOP_SWITCHTO_BRUSH      = 0x000040, /*6. ***********************/
@@ -122,7 +143,8 @@ typedef enum {                             /*TLDR;*/
     DRAWOP_DELETE_SEQUENCE     = 0x001000, 
     DRAWOP_DRAW_ENGAGE         = 0x002000, /*11.Cannot couple together*/
     DRAWOP_DRAW_RELEASE        = 0x004000, /*12.***********************/
-
+    DRAWOP_CLEAR_NOW           = 0x008000,
+    DRAWOP_SCREENSHOT          = 0x010000,
 } drawop_action;
 
 

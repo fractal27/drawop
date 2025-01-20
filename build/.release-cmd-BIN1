@@ -1,0 +1,1 @@
+cd 'build/release'; gcc -O3 -Wl,--as-needed,--gc-sections -L../.. -L lib/ src__drawopapi.o src__drawop.o src__internal.o src__main.o -lraylib -lm -o '../../build/drawop'

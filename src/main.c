@@ -1,7 +1,6 @@
 #include <raylib.h>
 #include <stdbool.h>
-#include <math.h>
-
+#include "drawopapi.h"
 #include "drawop.h"
 
 //int main(int argc, char** argv){
@@ -14,7 +13,7 @@ int main(){
     current_state.segments_to_draw[0].thickness = current_state.radius;
     current_state.help_window = true;
     current_state.alpha = 0xff;
-    current_state.config.title = "drawop 0.2.3";
+    current_state.config.title = "drawop 0.2.4";
     current_state.config.title_text_color = (Color){
         0xff,0x00,0x00,0xff
     };
@@ -24,23 +23,41 @@ int main(){
     };
     current_state.config.highlight_alpha_div = DEFAULT_HIGHLIGHT_ALPHA_DIV;
     current_state.config.highlight_radius_mult= DEFAULT_HIGHLIGHT_RADIUS_MULT;
+    current_state.config.transparent = false;
+    current_state.config.background = (Color){0x18,0x18,0x18,0xff};
+    current_state.background_cleared = 0;
 
     SetConfigFlags(FLAG_WINDOW_TRANSPARENT); // Configures window to be transparent
     InitWindow(screenWidth, screenHeight, "Transparent");
     SetWindowPosition(GetMonitorWidth(0) / 2 - screenWidth / 2, GetMonitorHeight(0) / 2 - screenHeight / 2);
+    SetTraceLogLevel(LOG_INFO);
     //SetWindowState(FLAG_WINDOW_UNDECORATED); // Hide border/titlebar; omit if you want them there.
+    //RenderTexture2D target = LoadRenderTexture(screenWidth, screenHeight);
 
+#if defined(DRAWOPAPI_PROFILE) & !defined(DRAWOP_NO_LOG)
+    SetTraceLogLevel(LOG_INFO);
+    struct timespec start, end;
+    uint64_t dt;
+#endif
     SetExitKey(KEY_Q);
-    SetTargetFPS(60);
+    SetTargetFPS(70);
+
 
     while(!WindowShouldClose())
     {
+#if defined(DRAWOPAPI_PROFILE) && !defined(DRAWOP_NO_LOG)
+        get_ns_time(&start);
+#endif
+        draw(&current_state);
         drawop_action action = get_action(current_state);
         update(current_state,&current_state,action);
-        draw(&current_state);
+#if defined(DRAWOPAPI_PROFILE) & !defined(DRAWOP_NO_LOG)
+        get_ns_time(&end);
+        dt = delta_time(end,start);
+        TraceLog(LOG_INFO,"total dt: %.2lfms",(double)dt/1e6);
+#endif
     }
 
-    //UnloadRenderTexture(target);
     CloseWindow();
 }
 

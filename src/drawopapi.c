@@ -1,11 +1,8 @@
-/* drawopAPI.c*/
+/* drawopAPI.c 0.2.4*/
 #include <math.h>
-#include <stdio.h>
-
+#include <stdint.h>
+#include <string.h>
 #include "drawopapi.h"
-//#include "drawop.h"
-
-
 
 void drawop_undohighlight(drawop_state* state){
     int alpha = (int)floor(state->color.a*2);
@@ -16,26 +13,39 @@ void drawop_undohighlight(drawop_state* state){
             TraceLog(LOG_INFO,"highlighter unloaded: alpha=%d;",alpha);
     } else  TraceLog(LOG_INFO,"highlighter unloaded: alpha already=%d;",alpha);
     state->radius = (int)floor(state->radius/state->config.highlight_radius_mult);
-    TraceLog(LOG_INFO,"highlighter unloaded: state->radius=%d;",state->radius);
+    TraceLog(LOG_INFO,"highlighter unloaded: state->radius=%lf;",state->radius);
 }
 
 
 void drawop_updatestate(drawop_state state, drawop_state* endstate, drawop_action actions){
+    
     *endstate = state;
-    //drawop_state endstate->= state;
+    endstate->should_clear = actions & DRAWOP_CLEAR_NOW;
 
     if(actions & DRAWOP_UPDATE_ALPHA){
         //printf("updated alpha: endstate->color.a=%.2f",state.alpha);
+        endstate->should_clear = true;
         endstate->color.a = (int)floor(state.alpha*255);
     }
     endstate->mouse_position = GetMousePosition();
 
     if(actions & DRAWOP_TOGGLE_COLOR_PICKER){
         endstate->pickColor = !state.pickColor;
+        endstate->should_clear = true;
         endstate->pickColorLocation = state.mouse_position;
     }
-    if(actions & DRAWOP_TOGGLE_HELP)
+    if(actions & DRAWOP_TOGGLE_HELP){
         endstate->help_window = !state.help_window;
+        endstate->should_clear = true;
+    }
+    if(actions & DRAWOP_TOGGLE_TRANSPARENT){
+        endstate->config.transparent = !state.config.transparent;
+        endstate->should_clear = true;
+    }
+    if(actions & DRAWOP_SCREENSHOT){
+        const char* fn = TextFormat("~/Pictures/drawop/%08X.png");
+        TakeScreenshot(fn);
+    }
 
     switch(actions & 0x0000f0){
         case DRAWOP_SWITCHTO_LASER:
@@ -44,20 +54,23 @@ void drawop_updatestate(drawop_state state, drawop_state* endstate, drawop_actio
                 TraceLog(LOG_INFO,"highlighter unloaded: state.mode=LASER;");
             }
             endstate->pickColor = false;
+            endstate->should_clear = true;
             endstate->mode = LASER;
             break;
-
+            
         case DRAWOP_SWITCHTO_BRUSH:
             if(state.mode == HIGHLIGHTER){
                 drawop_undohighlight(endstate);
                 TraceLog(LOG_INFO,"highlighter unloaded: state.mode=BRUSH;");
             }
             endstate->pickColor = false;
+            endstate->should_clear = true;
             endstate->mode = BRUSH;
             break;
 
         case DRAWOP_SWITCHTO_HIGHLIGHT:
             endstate->mode = HIGHLIGHTER;
+            endstate->should_clear = true;
             endstate->pickColor = false;
             int alpha = (int)floor(state.color.a/state.config.highlight_alpha_div);
             if(alpha != state.color.a){
@@ -72,6 +85,7 @@ void drawop_updatestate(drawop_state state, drawop_state* endstate, drawop_actio
     }
     switch(actions & 0x000f00){
         case DRAWOP_RESET:
+            endstate->should_clear = true;
             endstate->nto_draw = 0;
             break;
 
@@ -80,6 +94,7 @@ void drawop_updatestate(drawop_state state, drawop_state* endstate, drawop_actio
             break;
 
         case DRAWOP_CONTROL_RELEASE:
+            endstate->should_clear = true;
             endstate->control_pressed = false;
             break;
     }
@@ -88,16 +103,16 @@ void drawop_updatestate(drawop_state state, drawop_state* endstate, drawop_actio
             if (state.control_pressed){
                 if(state.nto_draw){
                     TraceLog(LOG_INFO,"Deleting last sequence");
-                    endstate->nto_draw--;
+                    memset(&endstate->segments_to_draw[endstate->nto_draw--],0,sizeof(struct segment));
                 }
             }
+            endstate->should_clear = true;
             break;
         case DRAWOP_DRAW_ENGAGE:
             endstate->left_click_pressed = true;
             endstate->segments_to_draw[endstate->nto_draw].npositions = 0;
             endstate->segments_to_draw[endstate->nto_draw].thickness = endstate->radius;
             endstate->segments_to_draw[endstate->nto_draw].color = endstate->color;
-            //TraceLog(LOG_INFO,"New segment initialized with radius: %.2f and color (%d,%d,%d,%d)",state.radius,state.color.r,state.color.g,state.color.b,state.color.a);
             break;
 
         case DRAWOP_DRAW_RELEASE:
@@ -105,6 +120,8 @@ void drawop_updatestate(drawop_state state, drawop_state* endstate, drawop_actio
             endstate->left_click_pressed = false;
             if(state.nto_draw < SEG_MAX){
                 endstate->nto_draw++;
+            } else {
+                TraceLog(LOG_ERROR,"Segment array out of bounds.");
             }
             break;
     }
