@@ -1,13 +1,4 @@
-LIBS=-lraylib -lm 
-INCLUDE=-I../include
-CFLAGS=-Wall -Wextra -fsanitize=address -fsanitize=pointer-compare -fPIE
-BUILD=../build
-OBJECTS=$(BUILD)/drawop.o\
-	$(BUILD)/main.o\
-	$(BUILD)/drawopapi.o\
-	$(BUILD)/internal.o
-CC=clang
-
+include config.mk
 
 all: $(BUILD) $(OBJECTS) $(BUILD)/drawop
 
@@ -27,6 +18,8 @@ $(BUILD)/internal.o: internal.c
 $(BUILD)/drawop: $(OBJECTS) 		
 	$(CC) $(CFLAGS) $(INCLUDE) $(OBJECTS) $(LIBS) -o $(BUILD)/drawop
 
+install: $(BUILD)/drawop
+	cp $(BUILD)/drawop $(INSPREFIX)/bin/drawop
 
 clean:
 	rm $(OBJECTS) $(BUILD)/drawop
