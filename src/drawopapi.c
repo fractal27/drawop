@@ -1,6 +1,5 @@
 /* drawopAPI.c*/
 #include <math.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "drawopapi.h"
@@ -22,16 +21,13 @@ void drawop_init(int height, int width){
 }
 
 void drawop_undohighlight(drawop_state* state){
-    int alpha = (int)floor(state->color.a*2);
+    unsigned char alpha = (unsigned char)(state->alpha*255/2);
     if(alpha != state->color.a){
-
-        if(alpha > 255)     alpha = 255;
-        else if(alpha < 0)  alpha = 0;
 
         state->color.a = alpha;
             TraceLog(LOG_INFO,"highlighter unloaded: alpha=%d;",alpha);
     } else  TraceLog(LOG_INFO,"highlighter unloaded: alpha already=%d;",alpha);
-    state->radius = (int)floor(state->radius/state->config.highlight_radius_mult);
+    state->radius = (double)floor(state->radius/state->config.highlight_radius_mult);
     TraceLog(LOG_INFO,"highlighter unloaded: state->radius=%d;",state->radius);
 }
 
@@ -41,8 +37,9 @@ void drawop_updatestate(drawop_state state, drawop_state* endstate, drawop_actio
     //drawop_state endstate->= state;
 
     if(actions & DRAWOP_UPDATE_ALPHA){
-        //printf("updated alpha: endstate->color.a=%.2f",state.alpha);
-        endstate->color.a = (int)floor(state.alpha*255);
+        TraceLog(LOG_INFO,"%hhu != %hhu :: %.2f\n",(unsigned char)(state.alpha*0xff), state.color.a, state.alpha);
+        endstate->alpha   = state.alpha;
+        endstate->color.a = (unsigned char)(state.alpha*0xff);
     }
 
 

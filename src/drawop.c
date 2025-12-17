@@ -32,7 +32,7 @@ drawop_action get_action(drawop_state state){
     drawop_action actions = 0;
     drawop_action* pactions = &actions;
 
-    if(state.pickColor && state.alpha != state.color.a){
+    if(state.pickColor && (uint8_t)floorf(state.alpha*255) != state.color.a){
         add_action(pactions,DRAWOP_UPDATE_ALPHA);
     }
     int key_pressed = GetKeyPressed();
@@ -89,7 +89,7 @@ void update(drawop_state state,drawop_state* endstate, drawop_action actions){
                 endstate->pickColorLocation.x,
                 endstate->pickColorLocation.y+200,
                 200,50},
-                "transparent","full",&endstate->alpha,0,255);
+                "transparent","full",(float*)&endstate->alpha,0,255);
     }
 }
 

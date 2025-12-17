@@ -8,7 +8,7 @@
 int main(){
     drawop_init(0,0);
     drawop_state current_state = {
-           .color = (Color){0xff,0,0,0xff},
+           .color = (Color){0x64,0x95,0xED,0xFF},
            .radius = DEFAULT_RADIUS,
            .mode = LASER,
            .segments_to_draw[0].color = current_state.color,

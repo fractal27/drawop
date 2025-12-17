@@ -61,7 +61,7 @@ typedef struct {
     } mode;
 
     Vector2 mouse_position;
-    volatile float alpha;
+    float alpha;
     double radius;
     Color color;
 

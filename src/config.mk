@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS  := -Wall -Wextra -fsanitize=address -fsanitize=pointer-compare -fPIE
+CFLAGS  := -Wall -Wextra #-fsanitize=address -fsanitize=pointer-compare -fPIE
 INCLUDE := -I../include
 LIBS    := -lraylib -lm 
 
